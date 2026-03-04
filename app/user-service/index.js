@@ -6,9 +6,10 @@ const app = express();
 
 app.use("/api/users", router);
 
-app.use((err, res, req, next) => {
-  res.json({ message: "Không tồn tại đường dẫn" });
+app.use((req, res) => {
+  res.status(404).json({ message: "Không tồn tại đường dẫn" });
 });
+
 app.listen(envConfig.PORT, () => {
   console.log("ok");
 });
