@@ -62,32 +62,24 @@ services:
   api-gateway:
     image:
     environment:
-      - OTEL_SERVICE_NAME=api-gateway
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
-      - USER_SERVICE_URL=http://user-service:3001
     ports:
-      - "3000:3000"
+      - "8000:8000"
     depends_on:
       - alloy
 
   user-service:
     image:
     environment:
-      - OTEL_SERVICE_NAME=user-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
-      - NOTIFICATION_SERVICE_URL=http://notification-service:3002
     ports:
-      - "3001:3001"
+      - "8002:8002"
     depends_on:
       - alloy
 
   notification-service:
     image:
     environment:
-      - OTEL_SERVICE_NAME=notification-service
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://alloy:4317
     ports:
-      - "3002:3002"
+      - "8001:8001"
     depends_on:
       - alloy
 
