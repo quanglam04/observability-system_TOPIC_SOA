@@ -49,4 +49,31 @@ router.use(
   }),
 );
 
+router.use(
+  envConfig.NOTIFICATION_SERVICE_BASE_API,
+  createProxyMiddleware({
+    target: envConfig.NOTIFICATION_SERVICE_HOST,
+    changeOrigin: true,
+    pathRewrite: { "^/": "/api/notifications/" },
+    on: {
+      proxyReq: (proxyReq, req) => {
+        logger.info(
+          `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path}`,
+        );
+      },
+      proxyRes: (proxyRes, res) => {
+        logger.info("Response từ notification-service");
+      },
+      error: (err, req, res) => {
+        logger.error({
+          message: "Lỗi",
+          error: err.message,
+          originalUrl: req.originalUrl,
+        });
+        res.status(502).json({ error: "Bad Gateway", detail: err.message });
+      },
+    },
+  }),
+)
+
 export default router;
