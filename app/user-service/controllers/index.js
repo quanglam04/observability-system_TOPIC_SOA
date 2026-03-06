@@ -24,7 +24,6 @@ class UserController {
   async register(req, res) {
     try {
       const { email, username, password, confirmedPassword } = req.body;
-      logger.info(`Đang xử lý đăng ký cho ${email}`);
 
       let users = [];
       try {
@@ -53,7 +52,6 @@ class UserController {
         JSON.stringify(users, null, 2),
         "utf-8"
       );
-      logger.info(`Đã lưu thành công thông tin user ${email} vào file dummy.json`);
 
       try {
         await axios.post(
@@ -80,14 +78,13 @@ class UserController {
       });
     } catch (error) {
       logger.error(`Lỗi: ${error.message}`);
-      res.status(500).json({ error: "Lỗi hệ thống" });
+      res.status(500).json({ message: "Lỗi hệ thống" });
     }
   }
 
   async login(req, res) {
     try {
       const {email, password} = req.body
-      logger.info(`Xử lý yêu cầu đăng nhập: ${email}`)
 
       let users = []
       try {
@@ -122,7 +119,6 @@ class UserController {
   async profile (req, res){
     try {
       const userId = req.params.id;
-      logger.info(`Lấy thông tin người dùng: ${userId}`)
 
       let users = []
       try {
@@ -136,7 +132,7 @@ class UserController {
 
       if(!user){
         logger.warn(`Không tìm thấy người dùng với Id: ${userId}`);
-        return res.status(404).json({ error: "Người dùng không tồn tại!" });
+        return res.status(404).json({ message: "Người dùng không tồn tại!" });
       }
 
       const {password, ...userProfile} = user;

@@ -26,8 +26,6 @@ class NotificationController {
   async sendEmail(req, res) {
     try {
       const { email, subject, message } = req.body;
-      
-      logger.info(`Xử lý gửi email đến: ${email} với tiêu đề: ${subject}`);
 
       const mailOptions = {
         from: `"TOPIC Nhóm LVK": <${envConfig.EMAIL_USER}>`,
@@ -43,7 +41,7 @@ class NotificationController {
       res.status(200).json({ message: "Đã gửi thành công" });
     } catch (error) {
       logger.error(`Lỗi khi gửi email: ${error.message}`);
-      res.status(500).json({ error: "Gửi thất bại" });
+      res.status(500).json({ message: "Gửi thất bại" });
     }
   }
 }
