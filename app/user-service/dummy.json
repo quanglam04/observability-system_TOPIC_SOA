@@ -40,5 +40,40 @@
     "username": "Vu Nhan Kien",
     "password": "123456",
     "createdAt": "2026-03-05T15:13:44.406Z"
+  },
+  {
+    "id": "1772763287276",
+    "email": "chiuchiu@gmail.com",
+    "username": "Vu Nhan Kien",
+    "password": "123456",
+    "createdAt": "2026-03-06T02:14:47.276Z"
+  },
+  {
+    "id": "1772763858157",
+    "email": "chiuchiu1@gmail.com",
+    "username": "Vu Nhan Kien",
+    "password": "123456",
+    "createdAt": "2026-03-06T02:24:18.157Z"
+  },
+  {
+    "id": "1772764123793",
+    "email": "chiuchiu2@gmail.com",
+    "username": "Vu Nhan Kien",
+    "password": "123456",
+    "createdAt": "2026-03-06T02:28:43.793Z"
+  },
+  {
+    "id": "1772765592558",
+    "email": "chiuchiu3@gmail.com",
+    "username": "Vu Nhan Kien",
+    "password": "123456",
+    "createdAt": "2026-03-06T02:53:12.558Z"
+  },
+  {
+    "id": "1772765650541",
+    "email": "chiuchiu4@gmail.com",
+    "username": "Vu Nhan Kien",
+    "password": "123456",
+    "createdAt": "2026-03-06T02:54:10.541Z"
   }
 ]

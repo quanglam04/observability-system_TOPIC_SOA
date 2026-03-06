@@ -3,15 +3,35 @@ import gatewayController from "../controllers/index.js";
 import { createProxyMiddleware } from "http-proxy-middleware";
 import envConfig from "../config/config.js";
 import logger from "../config/logger.js";
-
+import { requestCounter, metricsRegister } from "../config/metrics.js";
 /**
  * Định nghĩa các route trong này -> gọi hàm controller để xử lý
  */
 
 const router = express.Router();
 
+router.get("/metrics", async (req, res) => {
+  res.set("Content-Type", metricsRegister.contentType);
+  res.end(await metricsRegister.metrics());
+});
+
 router.use((req, res, next) => {
-  logger.info("Gọi vào gateway");
+  if (req.originalUrl !== "/metrics") {
+    logger.info("Gọi vào gateway", {
+      method: req.method,
+      path: req.originalUrl,
+    });
+  }
+
+  res.on("finish", () => {
+    if (req.originalUrl !== "/metrics") {
+      // Tăng biến đếm request lên 1, phân loại theo method, đường dẫn
+      requestCounter.inc({
+        method: req.method,
+        path: req.originalUrl,
+      });
+    }
+  });
   next();
 });
 /**
@@ -32,16 +52,23 @@ router.use(
       proxyReq: (proxyReq, req) => {
         logger.info(
           `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path}`,
+          {
+            method: req.method,
+            path: req.originalUrl,
+          }
         );
       },
-      proxyRes: (proxyRes, res) => {
-        logger.info("Response từ user-service");
+      proxyRes: (proxyRes, req, res) => {
+        logger.info("Response từ user-service", {
+          method: req.method,
+          path: req.originalUrl,
+        });
       },
       error: (err, req, res) => {
-        logger.error({
-          message: "Lỗi",
-          error: err.message,
-          originalUrl: req.originalUrl,
+        logger.error(`Lỗi Gateway proxy: ${err.message}`, {
+          method: req.method,
+          path: req.originalUrl,
+          errorDetail: err.message,
         });
         res.status(502).json({ error: "Bad Gateway", detail: err.message });
       },
@@ -59,21 +86,28 @@ router.use(
       proxyReq: (proxyReq, req) => {
         logger.info(
           `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path}`,
+          {
+            method: req.method,
+            path: req.originalUrl,
+          }
         );
       },
-      proxyRes: (proxyRes, res) => {
-        logger.info("Response từ notification-service");
+      proxyRes: (proxyRes, req, res) => {
+        logger.info("Response từ notification-service", {
+          method: req.method,
+          path: req.originalUrl,
+        });
       },
       error: (err, req, res) => {
-        logger.error({
-          message: "Lỗi",
-          error: err.message,
-          originalUrl: req.originalUrl,
+        logger.error(`Lỗi Gateway proxy: ${err.message}`, {
+          method: req.method,
+          path: req.originalUrl,
+          errorDetail: err.message,
         });
         res.status(502).json({ error: "Bad Gateway", detail: err.message });
       },
     },
-  }),
-)
+  })
+);
 
 export default router;
