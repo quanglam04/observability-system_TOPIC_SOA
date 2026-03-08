@@ -51,11 +51,11 @@ router.use(
     on: {
       proxyReq: (proxyReq, req) => {
         logger.info(
-          `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path}`,
+          `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path} `,
           {
             method: req.method,
             path: req.originalUrl,
-          }
+          },
         );
       },
       proxyRes: (proxyRes, req, res) => {
@@ -65,12 +65,12 @@ router.use(
         });
       },
       error: (err, req, res) => {
-        logger.error(`Lỗi Gateway proxy: ${err.message}`, {
+        logger.error(`Lỗi Gateway proxy: ${err.stack || err}`, {
           method: req.method,
           path: req.originalUrl,
-          errorDetail: err.message,
+          errorDetail: err.stack,
         });
-        res.status(502).json({ error: "Bad Gateway", detail: err.message });
+        res.status(502).json({ error: "Bad Gateway", detail: err.stack });
       },
     },
   }),
@@ -89,7 +89,7 @@ router.use(
           {
             method: req.method,
             path: req.originalUrl,
-          }
+          },
         );
       },
       proxyRes: (proxyRes, req, res) => {
@@ -99,15 +99,15 @@ router.use(
         });
       },
       error: (err, req, res) => {
-        logger.error(`Lỗi Gateway proxy: ${err.message}`, {
+        logger.error(`Lỗi Gateway proxy: ${err.stack || err}`, {
           method: req.method,
           path: req.originalUrl,
-          errorDetail: err.message,
+          errorDetail: err.stack,
         });
-        res.status(502).json({ error: "Bad Gateway", detail: err.message });
+        res.status(502).json({ error: "Bad Gateway", detail: err.stack });
       },
     },
-  })
+  }),
 );
 
 export default router;
