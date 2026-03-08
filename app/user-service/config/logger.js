@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync } from "fs";
 import { join } from "path";
 import { createLogger, format, transports } from "winston";
+import LokiTransport from "winston-loki";
 
 const { combine, timestamp, printf, json } = format;
 
@@ -18,10 +19,7 @@ const colors = {
 const logger = createLogger({
   transports: [
     new transports.Console({
-      format: combine(
-        timestamp(),
-        json()       
-      ),
+      format: combine(timestamp({ format: "DD/MM/YYYY HH:mm:ss" }), json()),
     }),
 
     new transports.File({
@@ -34,6 +32,15 @@ const logger = createLogger({
           return `${timestamp} ${paddedLevel}: ${message}`;
         }),
       ),
+    }),
+
+    new LokiTransport({
+      host: "http://alloy:3100", // alloy nhận log rồi forward sang Loki
+      labels: { service: "user-service" },
+      json: true,
+      format: combine(timestamp(), json()),
+      replaceTimestamp: true,
+      onConnectionError: (err) => console.error("Loki connection error:", err),
     }),
   ],
 });

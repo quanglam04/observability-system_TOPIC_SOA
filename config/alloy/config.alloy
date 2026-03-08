@@ -1,98 +1,53 @@
-// =======================================================
-// 1. THU THẬP METRICS (Gửi tới Prometheus)
-// =======================================================
+// ── LOGS: nhận push từ winston-loki ──────────────────────────
+loki.source.api "push" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = 3100
+  }
+  forward_to = [loki.write.default.receiver]
+}
 
-/*
-Cần lưu ý gì khi chạy?
-Code logic API của bạn không cần sửa thêm một dấu phẩy nào.
+loki.write "default" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}
 
-File cấu hình này giả định bạn đang/sẽ chạy các service này bằng Docker (hoặc Docker Compose) và có sẵn Prometheus/Loki.
-
-Nếu bạn chạy file config.alloy này trong Docker Compose, nhớ mount volume /var/run/docker.sock:/var/run/docker.sock để Alloy có quyền "nhìn trộm" log của các container khác nhé!
-*/
-
-// Cấu hình cào (scrape) dữ liệu từ endpoint /metrics của 3 service
-prometheus.scrape "microservices_metrics" {
+// ── METRICS: scrape /metrics từng service ────────────────────
+prometheus.scrape "services" {
   targets = [
-    // Lưu ý: Nếu bạn chạy tất cả trong Docker Compose, hãy đổi 'localhost' thành tên service (VD: 'api-gateway:8000')
-    {"__address__" = "localhost:8000", "service_name" = "api-gateway"},
-    {"__address__" = "localhost:8001", "service_name" = "notification-service"},
-    {"__address__" = "localhost:8002", "service_name" = "user-service"},
+    {"__address__" = "api-gateway:8000",         "__metrics_path__" = "/metrics"},
+    {"__address__" = "user-service:8002",         "__metrics_path__" = "/metrics"},
+    {"__address__" = "notification-service:8001", "__metrics_path__" = "/metrics"},
   ]
-  metrics_path    = "/metrics"
-  scrape_interval = "10s" // Cứ 10 giây cào dữ liệu 1 lần
-  forward_to      = [prometheus.remote_write.prom_backend.receiver]
+  scrape_interval = "15s"
+  forward_to      = [prometheus.remote_write.mimir.receiver]
 }
 
-// Khai báo đích đến (Database Prometheus để lưu trữ Metrics)
-prometheus.remote_write "prom_backend" {
+prometheus.remote_write "mimir" {
   endpoint {
-    url = "http://localhost:9090/api/v1/write" // Đổi port nếu Prometheus của bạn chạy port khác
-  }
-}
-
-// =======================================================
-// 2. THU THẬP LOGS DẠNG JSON TỪ CONSOLE (Gửi tới Loki)
-// =======================================================
-// Giải thích: Vì bạn cấu hình Winston in JSON log ra Console (stdout), 
-// cách tối ưu nhất là cho Alloy đọc trực tiếp luồng log của Docker container.
-
-// Tìm kiếm các Docker container đang chạy
-discovery.docker "containers" {
-  host = "unix:///var/run/docker.sock"
-}
-
-// Bộ lọc: Chỉ lấy log từ 3 container của dự án chúng ta (bỏ qua log rác từ các container khác)
-discovery.relabel "microservices_logs" {
-  targets = discovery.docker.containers.targets
-
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(api-gateway|user-service|notification-service)" // Khớp với tên container của bạn
-    action        = "keep"
-  }
-
-  // Gắn thêm nhãn 'container' để lên Grafana dễ lọc theo tên service
-  rule {
-    source_labels = ["__meta_docker_container_name"]
-    regex         = "/(.*)"
-    target_label  = "container"
-  }
-}
-
-// Thực hiện thu thập log từ các container đã lọc
-loki.source.docker "docker_logs" {
-  host       = "unix:///var/run/docker.sock"
-  targets    = discovery.relabel.microservices_logs.output
-  forward_to = [loki.process.parse_json.receiver] // Đẩy qua bước parse JSON trước
-  labels     = {"job" = "microservices_console_logs"}
-}
-
-// Phân tích cú pháp chuỗi JSON mà Winston in ra để Loki hiểu được các trường (level, method, path...)
-loki.process "parse_json" {
-  forward_to = [loki.write.loki_backend.receiver]
-
-  stage.json {
-    expressions = {
-      level   = "level",
-      message = "message",
-      method  = "method",
-      path    = "path",
-      status  = "statusCode",
-    }
-  }
-  
-  // Áp dụng nhãn (label) 'level' (info, error, warn) chuẩn cho Loki
-  stage.labels {
-    values = {
-      level = "level",
+    url = "http://mimir:9009/api/v1/push"
+    headers = {
+      "X-Scope-OrgID" = "anonymous",
     }
   }
 }
 
-// Khai báo đích đến (Database Loki để lưu trữ Logs)
-loki.write "loki_backend" {
-  endpoint {
-    url = "http://localhost:3100/loki/api/v1/push" // Đổi port nếu Loki của bạn chạy port khác
+// ── TRACES: nhận OTLP gRPC từ OTel SDK ───────────────────────
+otelcol.receiver.otlp "default" {
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+  output {
+    traces = [otelcol.exporter.otlp.tempo.input]
+  }
+}
+
+otelcol.exporter.otlp "tempo" {
+  client {
+    endpoint = "http://tempo:4317"
+    tls {
+      insecure = true
+    }
   }
 }

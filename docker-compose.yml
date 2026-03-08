@@ -7,26 +7,27 @@ services:
     ports:
       - "9009:9009"
     volumes:
-      - ./observability/mimir/mimir.yaml:/etc/mimir.yaml
+      - ./config/mimir/mimir.yaml:/etc/mimir.yaml
       - mimir-data:/data
 
   loki:
     image: grafana/loki:latest
+    user: "0"
     command: ["-config.file=/etc/loki/local-config.yaml"]
     ports:
       - "3100:3100"
     volumes:
-      - ./observability/loki/loki-config.yaml:/etc/loki/local-config.yaml
+      - ./config/loki/loki-config.yaml:/etc/loki/local-config.yaml
       - loki-data:/loki
 
   tempo:
-    image: grafana/tempo:latest
+    image: grafana/tempo:2.4.2
     command: ["-config.file=/etc/tempo.yaml"]
     ports:
       - "3200:3200"
       - "4317:4317"
     volumes:
-      - ./observability/tempo/tempo.yaml:/etc/tempo.yaml
+      - ./config/tempo/tempo.yaml:/etc/tempo.yaml
       - tempo-data:/var/tempo
 
   grafana:
@@ -36,6 +37,9 @@ services:
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=grafana-pyroscope-app,grafana-exploretraces-app,grafana-metricsdrilldown-app
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - loki
       - mimir
@@ -46,8 +50,9 @@ services:
     ports:
       - "12345:12345"
       - "4318:4318"
+      - "3101:3100"
     volumes:
-      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy
     command:
       [
         "run",
@@ -60,24 +65,45 @@ services:
       - tempo
 
   api-gateway:
-    image:
+    build:
+      context: ./app/api-gateway
+      args:
+        PORT: 8000
     environment:
+      - NODE_ENV=production
+      - NOTIFICATION_SERVICE_HOST=http://notification-service:8001
+      - USER_SERVICE_HOST=http://user-service:8002
+      - USER_SERVICE_BASE_API=/api/users
+      - NOTIFICATION_SERVICE_BASE_API=/api/notifications
     ports:
       - "8000:8000"
     depends_on:
       - alloy
 
   user-service:
-    image:
+    build:
+      context: ./app/user-service
+      args:
+        PORT: 8002
     environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb+srv://vunhankien:vunhankien@cluster0.s6pbtkn.mongodb.net/topic
+      - NOTIFICATION_SERVICE_HOST=http://notification-service:8001
+      - NOTIFICATION_SERVICE_BASE_API=/api/notifications
     ports:
       - "8002:8002"
     depends_on:
       - alloy
 
   notification-service:
-    image:
+    build:
+      context: ./app/notification-service
+      args:
+        PORT: 8001
     environment:
+      - NODE_ENV=production
+      - EMAIL_USER=vnkien28082004@gmail.com
+      - EMAIL_PASS=pccjqzddmebadlvb
     ports:
       - "8001:8001"
     depends_on:
