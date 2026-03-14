@@ -16,23 +16,12 @@ app.get("/metrics", async (req, res) => {
 });
 
 app.use((req, res, next) => {
-  if (req.originalUrl !== "/metrics") {
-    logger.info("Request", {
-      method: req.method,
-      path: req.originalUrl,
-    });
-  }
-
   res.on("finish", () => {
     if (req.originalUrl !== "/metrics") {
-      logger.info("Response", {
-        method: req.method,
-        path: req.originalUrl,
-      });
-
       requestCounter.inc({
         method: req.method,
         path: req.originalUrl,
+        status: res.statusCode.toString(),
       });
     }
   });

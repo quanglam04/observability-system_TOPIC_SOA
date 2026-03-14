@@ -34,10 +34,12 @@ class NotificationController {
         text: message,
       };
 
+      setTimeout(() => {}, 2000);
+
       await transporter.sendMail(mailOptions);
 
       logger.info(`Email đã được gửi thành công tới: ${email}`);
-      
+
       res.status(200).json({ message: "Đã gửi thành công" });
     } catch (error) {
       logger.error(`Lỗi khi gửi email: ${error.message}`);

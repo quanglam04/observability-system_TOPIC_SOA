@@ -29,6 +29,7 @@ router.use((req, res, next) => {
       requestCounter.inc({
         method: req.method,
         path: req.originalUrl,
+        status: res.statusCode.toString(),
       });
     }
   });
@@ -49,21 +50,8 @@ router.use(
     changeOrigin: true,
     pathRewrite: { "^/": "/api/users/" },
     on: {
-      proxyReq: (proxyReq, req) => {
-        logger.info(
-          `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path} `,
-          {
-            method: req.method,
-            path: req.originalUrl,
-          },
-        );
-      },
-      proxyRes: (proxyRes, req, res) => {
-        logger.info("Response từ user-service", {
-          method: req.method,
-          path: req.originalUrl,
-        });
-      },
+      proxyReq: (proxyReq, req) => {},
+      proxyRes: (proxyRes, req, res) => {},
       error: (err, req, res) => {
         logger.error(`Lỗi Gateway proxy: ${err.stack || err}`, {
           method: req.method,
@@ -83,21 +71,8 @@ router.use(
     changeOrigin: true,
     pathRewrite: { "^/": "/api/notifications/" },
     on: {
-      proxyReq: (proxyReq, req) => {
-        logger.info(
-          `Forwarding: ${req.method} ${req.originalUrl} → ${proxyReq.path}`,
-          {
-            method: req.method,
-            path: req.originalUrl,
-          },
-        );
-      },
-      proxyRes: (proxyRes, req, res) => {
-        logger.info("Response từ notification-service", {
-          method: req.method,
-          path: req.originalUrl,
-        });
-      },
+      proxyReq: (proxyReq, req) => {},
+      proxyRes: (proxyRes, req, res) => {},
       error: (err, req, res) => {
         logger.error(`Lỗi Gateway proxy: ${err.stack || err}`, {
           method: req.method,

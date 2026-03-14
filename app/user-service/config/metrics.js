@@ -7,7 +7,7 @@ client.collectDefaultMetrics();
 export const requestCounter = new client.Counter({
   name: "http_requests_total",
   help: "Tổng số lượng HTTP requests",
-  labelNames: ["method", "path"],
+  labelNames: ["method", "path", "status"],
 });
 
 export const dbQueryCounter = new client.Counter({

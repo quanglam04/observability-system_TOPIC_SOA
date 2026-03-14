@@ -14,3 +14,12 @@ blocks_storage:
 
 compactor:
   data_dir: /data/compactor
+
+# ── THÊM 2 PHẦN NÀY ──────────────────────────────────────────
+ruler:
+  enable_api: true
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/ruler
