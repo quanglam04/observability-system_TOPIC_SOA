@@ -89,8 +89,29 @@ Cuộn xuống phần **Logs** trên Dashboard, hoặc vào **Explore → Loki**
 # Xem log của tất cả service cùng lúc
 {service=~"api-gateway|user-service|notification-service"} | json
 
-# Tìm log theo từ khóa
+# Tìm log theo từ khóa (substring, không cần parse JSON)
 {service="api-gateway"} |= "error"
+
+# Loại trừ log theo từ khóa
+{service="api-gateway"} != "health check"
+
+# Xem log theo method HTTP
+{service="api-gateway"} | json | method="POST"
+
+# Xem log lỗi của tất cả service (dùng docker label)
+{job="docker"} | json | level="error"
+
+# Lọc theo nhiều điều kiện
+{service="user-service"} | json | level="error" | method="POST"
+
+# Đếm số lỗi theo từng service trong 5 phút
+sum by (service) (count_over_time({job="docker"} | json | level="error" [5m]))
+
+# Tìm log chứa traceId cụ thể (khi điều tra 1 request)
+{job="docker"} | json | traceId="abc123xyz"
+
+# Xem log trong khoảng thời gian có nhiều lỗi
+{job="docker"} | json | level="error" | message=~".*timeout.*|.*connection.*|.*refused.*"
 ```
 
 ---
