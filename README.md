@@ -134,11 +134,29 @@ Tracing giúp theo dõi một request đi qua bao nhiêu service, mất bao lâu
 # Tìm tất cả trace của api-gateway
 {resource.service.name="api-gateway"}
 
-# Tìm trace chậm hơn 500ms
+# Tìm trace chậm hơn 500ms (1 service cụ thể)
 {resource.service.name="api-gateway"} | duration > 500ms
 
-# Tìm trace có lỗi
+# Tìm trace chậm hơn 500ms (tất cả service)
+{} | duration > 500ms
+
+# Tìm trace có lỗi (1 service cụ thể)
 {resource.service.name="api-gateway"} | status = error
+
+# Tìm trace có lỗi (tất cả service)
+{} | status = error
+
+# Kết hợp lỗi và chậm
+{} | status = error && duration > 500ms
+
+# Tìm trace theo traceId cụ thể (từ log nhảy sang)
+{} | traceId = "abc123xyz"
+
+# Tìm trace của nhiều service cùng lúc
+{resource.service.name=~"api-gateway|user-service"}
+
+# Tìm trace chậm và có lỗi của 1 service cụ thể
+{resource.service.name="user-service"} | duration > 1s && status = error
 ```
 
 ---
